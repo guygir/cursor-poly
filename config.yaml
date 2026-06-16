@@ -1,0 +1,34 @@
+poll_interval_minutes: 5
+dry_run: true
+
+markets:
+  - id: "0xconditionid"
+    token_id: "1234567890"
+    outcome: "YES"
+    end_time: "2026-12-31T23:59:00+00:00"
+    min_price: 0.35
+    max_price: 0.55
+    buy_usd: 10
+    avoid_buy_within_end_minutes: 1
+    sell_shares: "all"
+    enabled: false
+
+recurring_markets:
+  - asset: "btc"
+    timeframe: "5m"
+    outcome: "UP"
+    min_price: 0.35
+    max_price: 0.55
+    buy_usd: 10
+    avoid_buy_within_end_minutes: 1
+    sell_shares: "all"
+    enabled: true
+  - asset: "btc"
+    timeframe: "5m"
+    outcome: "DOWN"
+    min_price: 0.35
+    max_price: 0.55
+    buy_usd: 10
+    avoid_buy_within_end_minutes: 1
+    sell_shares: "all"
+    enabled: true
