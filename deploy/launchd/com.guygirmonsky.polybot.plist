@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.guygirmonsky.polybot</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/guygirmonsky/Cursor_Poly/deploy/launchd/run-polybot.sh</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/guygirmonsky/Cursor_Poly</string>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/guygirmonsky/Cursor_Poly/logs/polybot.out.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/guygirmonsky/Cursor_Poly/logs/polybot.err.log</string>
+</dict>
+</plist>
