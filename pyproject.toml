@@ -23,6 +23,8 @@ dev = [
 [project.scripts]
 polybot = "polybot.runner:main"
 polybot-resolve = "polybot.market_resolver:main"
+polybot-monitor-updown = "polybot.research:monitor_main"
+polybot-analyze-doubles = "polybot.research:analyze_main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/polybot"]
