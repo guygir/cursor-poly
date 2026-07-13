@@ -187,19 +187,53 @@ Polymarket supports GTC limit orders through the CLOB API. The bot uses that for
 
 You can monitor BTC 5m Up/Down prices without wallet credentials. This records public order-book prices into SQLite so you can later test entry thresholds.
 
+No wallet, no positions, and no orders are involved. The monitor only reads public Gamma and CLOB order-book data.
+
+### Run On A Standalone PC
+
+Run this workflow on a machine that can reach Polymarket APIs. Cloud agent and many datacenter networks are often blocked by Polymarket, so use a home PC, laptop, or VPS with normal residential or non-blocked egress.
+
+1. Clone or copy this repo onto the machine.
+2. Install the project:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+```
+
+3. Confirm Polymarket is reachable before starting a long collection:
+
+```bash
+.venv/bin/python -c "
+from polybot.config import load_env
+from polybot.polymarket_client import PolymarketClient
+from polybot.research import collect_updown_once
+
+samples = collect_updown_once(PolymarketClient(load_env(None)), 'btc', '5m')
+print(len(samples), samples[0].slug if samples else 'no samples')
+"
+```
+
+You should see `2` and a slug like `btc-updown-5m-...`. If you get a connection error, switch to a different network or machine before collecting data.
+
+4. Collect BTC 5m samples for 3 hours:
+
+```bash
+.venv/bin/polybot-monitor-updown --asset btc --timeframe 5m --interval-seconds 1 --duration-minutes 180
+```
+
 Recommended sampling is `1s`. `0.5s` is possible, but usually not worth the extra API load for a multi-hour run.
 
-Collect BTC 5m samples for 3 hours:
+Samples are stored in `data/research.sqlite3`, which is intentionally ignored by git.
+
+5. After collection finishes, generate the `a -> 2a` table:
 
 ```bash
-polybot-monitor-updown --asset btc --timeframe 5m --interval-seconds 1 --duration-minutes 180
+.venv/bin/polybot-analyze-doubles --asset btc --timeframe 5m --min-threshold 0.05 --max-threshold 0.50 --step 0.01
 ```
 
-Analyze whether buying at threshold `a` later reached a sell target of `2a`:
-
-```bash
-polybot-analyze-doubles --asset btc --timeframe 5m --min-threshold 0.05 --max-threshold 0.50 --step 0.01
-```
+### Interpretation
 
 The analyzer uses realistic side prices:
 
@@ -207,7 +241,20 @@ The analyzer uses realistic side prices:
 - Double-target success: after entry, best bid becomes `>= 2a` before the window ends.
 - Results are grouped separately for `UP` and `DOWN`.
 
-The default research database is `data/research.sqlite3`, which is intentionally ignored by git.
+### Optional Long-Running Collection
+
+For unattended collection on macOS or Linux, run the monitor in `tmux`, `screen`, or `nohup`:
+
+```bash
+nohup .venv/bin/polybot-monitor-updown \
+  --asset btc \
+  --timeframe 5m \
+  --interval-seconds 1 \
+  --duration-minutes 180 \
+  > data/research-monitor.log 2>&1 &
+```
+
+Copy `data/research.sqlite3` back to your analysis machine if collection and analysis happen on different computers.
 
 ## Optional Docker
 
