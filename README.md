@@ -183,6 +183,32 @@ Keep dry-run enabled until logs show the exact markets, prices, holdings, and ac
 
 Polymarket supports GTC limit orders through the CLOB API. The bot uses that for exits: after it sees that you hold shares, it places a resting sell-limit order at `max_price`. If that order is already open, it does not place another one.
 
+## Public Price Research
+
+You can monitor BTC 5m Up/Down prices without wallet credentials. This records public order-book prices into SQLite so you can later test entry thresholds.
+
+Recommended sampling is `1s`. `0.5s` is possible, but usually not worth the extra API load for a multi-hour run.
+
+Collect BTC 5m samples for 3 hours:
+
+```bash
+polybot-monitor-updown --asset btc --timeframe 5m --interval-seconds 1 --duration-minutes 180
+```
+
+Analyze whether buying at threshold `a` later reached a sell target of `2a`:
+
+```bash
+polybot-analyze-doubles --asset btc --timeframe 5m --min-threshold 0.05 --max-threshold 0.50 --step 0.01
+```
+
+The analyzer uses realistic side prices:
+
+- Entry opportunity: first time best ask is `<= a`.
+- Double-target success: after entry, best bid becomes `>= 2a` before the window ends.
+- Results are grouped separately for `UP` and `DOWN`.
+
+The default research database is `data/research.sqlite3`, which is intentionally ignored by git.
+
 ## Optional Docker
 
 ```bash
