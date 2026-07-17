@@ -7,7 +7,7 @@ first_minute:
   poll_interval_seconds: 1
   entry_window_seconds: 60
   min_time_left_seconds: 240
-  buy_usd: 10
+  buy_usd: 1
   rules:
     - outcome: DOWN
       entry_ask: 0.36
