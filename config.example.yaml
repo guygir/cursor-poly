@@ -1,34 +1,35 @@
-poll_interval_minutes: 5
 dry_run: true
+mode: first_minute
 
-markets:
-  - id: "0xconditionid"
-    token_id: "1234567890"
-    outcome: "YES"
-    end_time: "2026-12-31T23:59:00+00:00"
-    min_price: 0.35
-    max_price: 0.55
-    buy_usd: 10
-    avoid_buy_within_end_minutes: 1
-    sell_shares: "all"
-    enabled: true
+first_minute:
+  asset: btc
+  timeframe: 5m
+  poll_interval_seconds: 1
+  entry_window_seconds: 60
+  min_time_left_seconds: 240
+  buy_usd: 10
+  rules:
+    - outcome: DOWN
+      entry_ask: 0.36
+      exit_multiplier: 2.7
+      enabled: true
+    - outcome: UP
+      entry_ask: 0.36
+      exit_multiplier: 2.7
+      enabled: false
 
-recurring_markets:
-  - asset: "btc"
-    timeframe: "5m"
-    outcome: "UP"
-    min_price: 0.35
-    max_price: 0.55
-    buy_usd: 10
-    avoid_buy_within_end_minutes: 1
-    sell_shares: "all"
-    enabled: false
-  - asset: "btc"
-    timeframe: "5m"
-    outcome: "DOWN"
-    min_price: 0.35
-    max_price: 0.55
-    buy_usd: 10
-    avoid_buy_within_end_minutes: 1
-    sell_shares: "all"
-    enabled: false
+# Classic mode alternative:
+# mode: classic
+# poll_interval_minutes: 5
+# markets:
+#   - id: "0xconditionid"
+#     token_id: "1234567890"
+#     outcome: "YES"
+#     end_time: "2026-12-31T23:59:00+00:00"
+#     min_price: 0.35
+#     max_price: 0.55
+#     buy_usd: 10
+#     avoid_buy_within_end_minutes: 1
+#     sell_shares: "all"
+#     enabled: true
+# recurring_markets: []

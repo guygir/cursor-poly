@@ -165,6 +165,23 @@ caffeinate -dimsu
 
 Leave that terminal open. Closing it allows normal sleep behavior again.
 
+## First-Minute Strategy (default config)
+
+`mode: first_minute` in `config.yaml` implements the research deployable rule:
+
+- Poll BTC 5m Up/Down every **1 second** during the first **60 seconds** of each window (`minutes_left >= 4`).
+- Evaluate enabled side rules (ask ≤ `entry_ask`). Take **at most one** trade per window, or do nothing.
+- If a buy happens, place a resting sell-limit at `entry_ask * exit_multiplier` (hold to settle if it never fills).
+- Current research mapping: **DOWN a=0.36 x=2.7 enabled**; **UP disabled** (no ROI>10% early-window UP rule).
+
+Dry-run (no wallet required):
+
+```bash
+polybot --once
+# or continuously:
+polybot
+```
+
 ## Real Trading
 
 Real orders require two explicit switches:
@@ -178,6 +195,8 @@ POLYBOT_ENABLE_TRADING=true
 ```
 
 Keep dry-run enabled until logs show the exact markets, prices, holdings, and actions you expect.
+
+**Never commit `.env` or private keys.** If a key was ever pushed to a public repo, treat that wallet as compromised and use a new account.
 
 ## Sell Limits
 

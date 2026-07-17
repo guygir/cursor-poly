@@ -127,6 +127,17 @@ Best pooled cell per time filter:
 
 `side=DOWN  a=0.36  x=2.7  time_left>=270s`  (hold-to-settle fallback if no TP hit)
 
+### Live bot mapping (first-minute mode)
+
+`config.yaml` `mode: first_minute` polls every **1s** for the first **60s** of each BTC 5m
+window (i.e. while `minutes_left >= 4`), takes **at most one** side, then places a resting
+sell-limit at `a·x` (else hold to settle).
+
+| Side | Deployed? | Rule | Why |
+|------|-----------|------|-----|
+| DOWN | yes | a=0.36, x=2.7, ≥4m left | Only 3/3 ROI>10% early-window rule |
+| UP | no | — | No ROI>10% UP rule at ≥4m left; cheap UP holds are late-dump artifacts |
+
 ## Reproduce
 
 ```bash

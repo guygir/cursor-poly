@@ -1,34 +1,31 @@
-poll_interval_minutes: 5
+# First-minute BTC 5m strategy from docs/research-strategy-summary.md
+# DOWN qualifies (ROI > 10% on all 3 DBs at early window).
+# UP has no ROI > 10% rule with minutes_left >= 4 that survives cross-DB checks
+# (cheap UP holds are late-window dump artifacts) — left disabled.
+
 dry_run: true
+mode: first_minute
 
-markets:
-  - id: "0xconditionid"
-    token_id: "1234567890"
-    outcome: "YES"
-    end_time: "2026-12-31T23:59:00+00:00"
-    min_price: 0.35
-    max_price: 0.55
-    buy_usd: 10
-    avoid_buy_within_end_minutes: 1
-    sell_shares: "all"
-    enabled: false
+first_minute:
+  asset: btc
+  timeframe: 5m
+  poll_interval_seconds: 1
+  entry_window_seconds: 60
+  min_time_left_seconds: 240
+  buy_usd: 10
+  rules:
+    - outcome: DOWN
+      entry_ask: 0.36
+      exit_multiplier: 2.7
+      enabled: true
+      note: "3/3 robust: worst-DB ROI +14.9%, avg ~+23% (a=0.36, x=2.7, >=270s)"
+    - outcome: UP
+      entry_ask: 0.36
+      exit_multiplier: 2.7
+      enabled: false
+      note: "No ROI>10% UP rule at minutes_left>=4 in research summary"
 
-recurring_markets:
-  - asset: "btc"
-    timeframe: "5m"
-    outcome: "UP"
-    min_price: 0.35
-    max_price: 0.55
-    buy_usd: 10
-    avoid_buy_within_end_minutes: 1
-    sell_shares: "all"
-    enabled: true
-  - asset: "btc"
-    timeframe: "5m"
-    outcome: "DOWN"
-    min_price: 0.35
-    max_price: 0.55
-    buy_usd: 10
-    avoid_buy_within_end_minutes: 1
-    sell_shares: "all"
-    enabled: true
+# Classic threshold mode (unused when mode: first_minute)
+poll_interval_minutes: 5
+markets: []
+recurring_markets: []
