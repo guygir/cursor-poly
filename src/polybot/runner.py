@@ -54,6 +54,7 @@ class Runner:
         self._state = BotState(env.db_path)
         self._portfolio: Portfolio | None = None
         self._dry_run_holdings: dict[str, float] = {}
+        self._dry_run_sell_limits: set[str] = set()
         if env.user_address:
             self._portfolio = Portfolio(self._client, env.user_address)
 
@@ -130,6 +131,7 @@ class Runner:
                 active_token_id = None
                 active_market_id = None
                 self._dry_run_holdings.clear()
+                self._dry_run_sell_limits.clear()
 
             try:
                 metadata = self._client.resolve_updown_market(
@@ -260,7 +262,9 @@ class Runner:
             return
 
         has_open_sell_limit = False
-        if not self._config.dry_run and self._env.enable_trading:
+        if self._config.dry_run:
+            has_open_sell_limit = token_id in self._dry_run_sell_limits
+        elif self._env.enable_trading:
             try:
                 has_open_sell_limit = self._client.has_open_sell_limit(
                     token_id=token_id,
@@ -293,6 +297,11 @@ class Runner:
             decision.reason,
         )
         self._handle_decision(decision, buy_price=None, sell_price=None)
+        if (
+            self._config.dry_run
+            and decision.action == Action.PLACE_SELL_LIMIT
+        ):
+            self._dry_run_sell_limits.add(token_id)
 
     def run_once(self) -> None:
         for market in self._markets_for_current_cycle():
