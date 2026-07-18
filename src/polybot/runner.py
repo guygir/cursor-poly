@@ -296,7 +296,18 @@ class Runner:
             decision.action.value,
             decision.reason,
         )
-        self._handle_decision(decision, buy_price=None, sell_price=None)
+        try:
+            self._handle_decision(decision, buy_price=None, sell_price=None)
+        except Exception:
+            # e.g. CLOB min sell size (5 shares) when buy_usd is small - keep
+            # running and hold to settlement rather than crashing the bot.
+            LOGGER.exception(
+                "Exit action failed outcome=%s token=%s action=%s; will retry/hold",
+                rule.outcome,
+                token_id,
+                decision.action.value,
+            )
+            return
         if (
             self._config.dry_run
             and decision.action == Action.PLACE_SELL_LIMIT
