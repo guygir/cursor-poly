@@ -16,10 +16,10 @@ Copy secrets into a local `.env` (gitignored). Use the same values as the agent 
 - `POLYMARKET_USER_ADDRESS`
 - `POLYMARKET_FUNDER_ADDRESS`
 - `POLYMARKET_PRIVATE_KEY`
-- `POLYMARKET_SIGNATURE_TYPE=1`
+- `POLYMARKET_SIGNATURE_TYPE=3` (deposit-wallet / POLY_1271; `1` is proxy/Magic)
 - `POLYBOT_ENABLE_TRADING=false` (the script flips this on for the run)
 
-`config.yaml` should have `mode: first_minute` and `buy_usd: 1`.
+`config.yaml` should have `mode: first_minute` and `buy_usd: 2` (keeps share size above CLOB min sell size of 5 at entry ≤ 0.36).
 
 ## Start an 8-hour run (keeps PC awake)
 
@@ -27,17 +27,25 @@ In **PowerShell as your user** (lid can close on some setups only if sleep is in
 
 ```powershell
 cd path\to\cursor-poly
-powershell -ExecutionPolicy Bypass -File .\deploy\windows\run-8h.ps1 -Hours 8 -BuyUsd 1
+powershell -ExecutionPolicy Bypass -File .\deploy\windows\run-8h.ps1 -Hours 8 -BuyUsd 2
 ```
 
 What it does:
 
 - Sets `dry_run: false` and `POLYBOT_ENABLE_TRADING=true`
 - Calls Win32 `SetThreadExecutionState` so Windows should **not sleep** while the script runs
-- Runs `polybot` for 8 hours (DOWN ask ≤ 0.36 → $1 buy → sell-limit 0.97)
+- Runs `polybot` for N hours (DOWN ask ≤ 0.36 → buy → sell-limit 0.97)
 - On exit/timeout: restores `dry_run: true` and `POLYBOT_ENABLE_TRADING=false`
 
 Logs: `logs/polybot-8h.out.log`, `logs/polybot-8h.err.log`
+
+## PnL watcher (optional)
+
+Tracks matched buys from the out-log and prints WON/LOST + cumulative P&L after each window settles. Writes `logs/pnl-ledger.json` (gitignored under `logs/`). Does not load or print private keys.
+
+```powershell
+.\.venv\Scripts\python.exe .\deploy\windows\pnl-watcher.py
+```
 
 ## Also recommended in Windows Settings
 

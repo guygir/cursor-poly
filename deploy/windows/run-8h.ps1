@@ -22,7 +22,7 @@ $OutLog = Join-Path $LogDir "polybot-8h.out.log"
 $ErrLog = Join-Path $LogDir "polybot-8h.err.log"
 
 if (-not (Test-Path $EnvFile)) {
-    throw ".env not found at $EnvFile — copy your secrets there first (never commit it)."
+    throw ".env not found at $EnvFile - copy your secrets there first (never commit it)."
 }
 if (-not (Test-Path $Polybot)) {
     throw "polybot not found. Run: python -m venv .venv; .\.venv\Scripts\pip install -e ."
@@ -31,13 +31,15 @@ if (-not (Test-Path $Polybot)) {
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 
 # Keep Windows awake for the duration of this process.
-Add-Type -Namespace Win32 -Name Sleep -MemberDefinition @"
+if (-not ("Win32.Sleep" -as [type])) {
+    Add-Type -Namespace Win32 -Name Sleep -MemberDefinition @"
 [DllImport("kernel32.dll")]
 public static extern uint SetThreadExecutionState(uint esFlags);
 "@
-$ES_CONTINUOUS = [uint32]0x80000000
-$ES_SYSTEM_REQUIRED = [uint32]0x00000001
-$ES_AWAYMODE_REQUIRED = [uint32]0x00000040
+}
+$ES_CONTINUOUS = [Convert]::ToUInt32("80000000", 16)
+$ES_SYSTEM_REQUIRED = [Convert]::ToUInt32("00000001", 16)
+$ES_AWAYMODE_REQUIRED = [Convert]::ToUInt32("00000040", 16)
 [Win32.Sleep]::SetThreadExecutionState($ES_CONTINUOUS -bor $ES_SYSTEM_REQUIRED -bor $ES_AWAYMODE_REQUIRED) | Out-Null
 
 function Set-EnvTrading([bool]$Enabled) {
@@ -92,7 +94,7 @@ try {
         -PassThru `
         -WindowStyle Hidden
 
-    Write-Host "polybot pid=$($proc.Id) — running for $seconds seconds"
+    Write-Host "polybot pid=$($proc.Id) - running for $seconds seconds"
     Write-Host "Tail logs with: Get-Content $OutLog -Wait"
 
     if (-not $proc.WaitForExit($seconds * 1000)) {
