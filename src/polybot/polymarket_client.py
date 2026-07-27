@@ -44,6 +44,7 @@ class MarketMetadata:
     market_id: str
     slug: str | None
     question: str | None
+    start_time: datetime | None
     end_time: datetime | None
     tokens_by_outcome: dict[str, str]
     closed: bool | None = None
@@ -119,6 +120,7 @@ class PolymarketClient:
                 market_id=condition_id,
                 slug=slug,
                 question=None,
+                start_time=None,
                 end_time=None,
                 tokens_by_outcome={},
             ),
@@ -138,6 +140,53 @@ class PolymarketClient:
     ) -> MarketMetadata:
         slug = updown_slug(asset=asset, timeframe=timeframe, now_ts=now_ts)
         return self.resolve_market_slug(slug)
+
+    def find_active_updown_markets(
+        self,
+        asset: str,
+        timeframe: str,
+        limit: int = 200,
+    ) -> list[MarketMetadata]:
+        response = requests.get(
+            f"{self._env.gamma_api_url.rstrip('/')}/events",
+            params={"active": "true", "closed": "false", "limit": limit},
+            timeout=self._timeout_seconds,
+        )
+        response.raise_for_status()
+        events = response.json()
+        if not isinstance(events, list):
+            raise ValueError("Gamma events returned an unexpected response")
+
+        matches: list[MarketMetadata] = []
+        for event in events:
+            if not isinstance(event, dict) or not _matches_updown_event(event, asset, timeframe):
+                continue
+            markets = event.get("markets")
+            if not isinstance(markets, list):
+                continue
+            for raw_market in markets:
+                if not isinstance(raw_market, dict):
+                    continue
+                market = dict(raw_market)
+                market.setdefault("slug", event.get("slug"))
+                market.setdefault("question", event.get("title") or event.get("question"))
+                market.setdefault("startDate", event.get("startTime") or event.get("startDate"))
+                market.setdefault("endDate", event.get("endDate"))
+                metadata = _merge_gamma_metadata(
+                    MarketMetadata(
+                        market_id=str(market.get("conditionId") or ""),
+                        slug=market.get("slug"),
+                        question=None,
+                        start_time=None,
+                        end_time=None,
+                        tokens_by_outcome={},
+                    ),
+                    market,
+                )
+                if metadata.market_id and metadata.tokens_by_outcome:
+                    matches.append(metadata)
+
+        return sorted(matches, key=lambda item: item.end_time or datetime.max.replace(tzinfo=timezone.utc))
 
     def get_position(self, user_address: str, token_id: str, market_id: str | None = None) -> Position:
         params: dict[str, Any] = {
@@ -281,6 +330,7 @@ class PolymarketClient:
         market = dict(markets[0])
         market.setdefault("slug", event.get("slug") or slug)
         market.setdefault("question", event.get("title") or event.get("question"))
+        market.setdefault("startDate", event.get("startTime") or event.get("startDate"))
         market.setdefault("endDate", event.get("endDate"))
         return market
 
@@ -318,6 +368,7 @@ def _metadata_from_clob_market(raw: dict[str, Any]) -> MarketMetadata:
         market_id=market_id,
         slug=raw.get("slug"),
         question=raw.get("question"),
+        start_time=_parse_datetime(_first_present(raw, "start_time", "startTime", "startDate")),
         end_time=_parse_datetime(_first_present(raw, "end_time", "endTime", "endDate")),
         tokens_by_outcome=tokens_by_outcome,
         closed=_parse_optional_bool(raw.get("closed")),
@@ -338,6 +389,10 @@ def _merge_gamma_metadata(metadata: MarketMetadata, gamma: dict[str, Any]) -> Ma
         market_id=market_id,
         slug=gamma.get("slug") or metadata.slug,
         question=gamma.get("question") or metadata.question,
+        start_time=(
+            _parse_datetime(gamma.get("eventStartTime") or gamma.get("startTime") or gamma.get("startDate"))
+            or metadata.start_time
+        ),
         end_time=_parse_datetime(gamma.get("endDate") or gamma.get("endDateIso")) or metadata.end_time,
         tokens_by_outcome=tokens_by_outcome,
         closed=_parse_optional_bool(gamma.get("closed")) if "closed" in gamma else metadata.closed,
@@ -400,6 +455,24 @@ def updown_slug(asset: str, timeframe: str, now_ts: int | None = None) -> str:
     now = int(time.time()) if now_ts is None else now_ts
     window_start = (now // duration_seconds) * duration_seconds
     return f"{asset.lower()}-updown-{timeframe}-{window_start}"
+
+
+def _matches_updown_event(event: dict[str, Any], asset: str, timeframe: str) -> bool:
+    haystack_parts = [
+        event.get("slug"),
+        event.get("ticker"),
+        event.get("title"),
+        event.get("seriesSlug"),
+    ]
+    for series in event.get("series") or []:
+        if isinstance(series, dict):
+            haystack_parts.extend([series.get("slug"), series.get("ticker"), series.get("recurrence")])
+    haystack = " ".join(str(part).lower() for part in haystack_parts if part)
+    asset = asset.lower()
+    timeframe = timeframe.lower()
+    asset_matches = asset in haystack or (asset == "btc" and "bitcoin" in haystack)
+    timeframe_matches = timeframe in haystack or (timeframe == "1h" and "hour" in haystack)
+    return asset_matches and "up" in haystack and "down" in haystack and timeframe_matches
 
 
 def _get_field(value: Any, key: str) -> Any:

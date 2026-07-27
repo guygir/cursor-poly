@@ -23,6 +23,7 @@ def test_gamma_event_market_metadata_includes_orderability() -> None:
             market_id="",
             slug=None,
             question=None,
+            start_time=None,
             end_time=None,
             tokens_by_outcome={},
         ),
