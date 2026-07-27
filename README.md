@@ -256,6 +256,25 @@ nohup .venv/bin/polybot-monitor-updown \
 
 Copy `data/research.sqlite3` back to your analysis machine if collection and analysis happen on different computers.
 
+### BTC 1H + Kronos Research (scaffolded)
+
+Hourly Up/Down research is research-only (no wallet). See `docs/hourly-kronos-handoff.md` for the full next-agent checklist.
+
+```bash
+# Heuristic or Kronos (auto falls back if Kronos is not installed)
+.venv/bin/polybot-monitor-hourly-research \
+  --asset btc --timeframe 1h \
+  --predictor auto \
+  --max-entry-price 0.52 \
+  --interval-seconds 60 \
+  --duration-minutes 180
+
+# After windows end, resolve winners from Polymarket and print score summary
+.venv/bin/polybot-analyze-hourly --resolve
+```
+
+Kronos is optional and not bundled. Install [Kronos](https://github.com/shiyu-coder/Kronos) + torch on the research machine, then use `--predictor kronos`. Without it, the monitor uses the last closed Binance 1h candle as a temporary stand-in.
+
 ## Optional Docker
 
 ```bash
