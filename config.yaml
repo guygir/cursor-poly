@@ -22,7 +22,7 @@ recurring_markets:
     buy_usd: 10
     avoid_buy_within_end_minutes: 1
     sell_shares: "all"
-    enabled: true
+    enabled: false
   - asset: "btc"
     timeframe: "5m"
     outcome: "DOWN"
@@ -31,4 +31,4 @@ recurring_markets:
     buy_usd: 10
     avoid_buy_within_end_minutes: 1
     sell_shares: "all"
-    enabled: true
+    enabled: false

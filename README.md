@@ -129,6 +129,8 @@ polybot
 
 Run continuously in the background with `launchd`:
 
+The plist ships with `/path/to/cursor-poly` placeholders. Replace those paths with this repo’s absolute path before loading it. `.env` stays local; do not commit keys.
+
 ```bash
 mkdir -p ~/Library/LaunchAgents
 cp deploy/launchd/com.guygirmonsky.polybot.plist ~/Library/LaunchAgents/

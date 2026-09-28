@@ -11,7 +11,7 @@ markets:
     buy_usd: 10
     avoid_buy_within_end_minutes: 1
     sell_shares: "all"
-    enabled: true
+    enabled: false
 
 recurring_markets:
   - asset: "btc"
